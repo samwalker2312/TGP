@@ -6,36 +6,46 @@ x = np.loadtxt('radvel.txt',comments='#', usecols=0)
 y =  np.loadtxt('radvel.txt',comments='#', usecols=1)
 err =  np.loadtxt('radvel.txt',comments='#', usecols=2)
 
-def loglike(theta, x, y, err):
-    a, b, c, d, log_f = theta
-    model = a*np.sin(b*x+c)
-    sigma2 = err**2. + model**2.*np.exp(2*log_f)
-    return -.5*np.sum((y-model)**2./sigma2 + np.log(sigma2))
+class MCradvelminim(object):
 
-def logprior(theta):
-    a, b, c, d, log_f = theta
-    if -200 < a < 200 and 0. < b < 5000. and 0 < c < 1000 and -1000 < d < 1000 and -10. < log_f < 1.:
-        return 0.0
-    return -np.inf
+    def __init__(self, x, y, err):
+        self.x = x
+        self.y = y
+        self.err = err
+        
+    def loglike(self, theta):
+        a, b, c, d, log_f = theta
+        model = a*np.sin(b*self.x+c)
+        sigma2 = self.err**2. + model**2.*np.exp(2*log_f)
+        return -.5*np.sum((self.y-model)**2./sigma2 + np.log(sigma2))
 
-def logprob(theta, x, y, err):
-    lp = logprior(theta)
-    if not np.isfinite(lp):
+    def logprior(self, theta):
+        a, b, c, d, log_f = theta
+        if -200 < a < 200 and 0. < b < 5000. and 0 < c < 1000 and -1000 < d < 1000 and -10. <       log_f < 1.:
+            return 0.0
         return -np.inf
-    return lp + loglike(theta,x,y,err)
 
-pos = [[0,100,0,0,0]] + [[.1,1,1,.1,.01]]*np.random.randn(50,5)
-nwalkers, ndim = pos.shape
-sampler = emcee.EnsembleSampler(nwalkers, ndim, logprob, args = (x,y,err))
-sampler.run_mcmc(pos, 100000, progress=True)
+    def logprob(self, theta):
+        lp = self.logprior(theta)
+        if not np.isfinite(lp):
+            return -np.inf
+        return lp + self.loglike(theta)
 
-flat_samples = sampler.get_chain(discard=200, thin=15, flat=True)
-for i in range(ndim-1):
-    print(np.median(flat_samples[:,i]))
-
-xplot = np.linspace(x[0],x[-1],500)
-yplot = np.median(flat_samples[:,0])*np.sin(np.median(flat_samples[:,1])*xplot + np.median(flat_samples[:,2]))
-plt.figure()
-plt.errorbar(x,y,yerr=err, fmt='o')
-plt.plot(xplot, yplot)
-plt.show()
+    def run(self):
+        pos = [[0,100,0,0,0]] + [[.1,1,1,.1,.01]]*np.random.randn(50,5)
+        self.nwalkers, self.ndim = pos.shape
+        self.sampler = emcee.EnsembleSampler(self.nwalkers, self.ndim, self.logprob, args = (self.x,self.y,self.err))
+        self.sampler.run_mcmc(pos, 100000, progress=True)
+        
+    def printvals(self):
+        self.flat_samples = self.sampler.get_chain(discard=200, thin=15, flat=True)
+        for i in range(ndim-1):
+            print(np.median(self.flat_samples[:,i]))
+    
+    def plotcurve(self):
+        xplot = np.linspace(self.x[0],self.x[-1],500)
+        yplot = np.median(self.flat_samples[:,0])*np.sin(np.median(self.flat_samples[:,1])*xplot + np.median(self.flat_samples[:,2])) + np.median(self.flat_samples[:,3])
+        plt.figure()
+        plt.errorbar(self.x,self.y,yerr=self.err, fmt='o')
+        plt.plot(xplot, yplot)
+        plt.show()

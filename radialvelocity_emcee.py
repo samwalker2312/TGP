@@ -2,17 +2,13 @@ import emcee
 import numpy as np
 import matplotlib.pyplot as plt
 
-x = np.loadtxt('radvel.txt',comments='#', usecols=0)
-y =  np.loadtxt('radvel.txt',comments='#', usecols=1)
-err =  np.loadtxt('radvel.txt',comments='#', usecols=2)
-
 class MCradvelminim(object):
 
     def __init__(self, x, y, err):
         self.x = x
         self.y = y
         self.err = err
-        
+
     def loglike(self, theta):
         a, b, c, d, log_f = theta
         model = a*np.sin(b*self.x+c)
@@ -25,7 +21,7 @@ class MCradvelminim(object):
             return 0.0
         return -np.inf
 
-    def logprob(self, theta):
+    def logprob(self, theta, x, y, z):
         lp = self.logprior(theta)
         if not np.isfinite(lp):
             return -np.inf
@@ -36,12 +32,14 @@ class MCradvelminim(object):
         self.nwalkers, self.ndim = pos.shape
         self.sampler = emcee.EnsembleSampler(self.nwalkers, self.ndim, self.logprob, args = (self.x,self.y,self.err))
         self.sampler.run_mcmc(pos, 100000, progress=True)
-        
-    def printvals(self):
+
+    def getsamples(self):
         self.flat_samples = self.sampler.get_chain(discard=200, thin=15, flat=True)
-        for i in range(ndim-1):
+
+    def printvals(self):
+        for i in range(self.ndim-1):
             print(np.median(self.flat_samples[:,i]))
-    
+
     def plotcurve(self):
         xplot = np.linspace(self.x[0],self.x[-1],500)
         yplot = np.median(self.flat_samples[:,0])*np.sin(np.median(self.flat_samples[:,1])*xplot + np.median(self.flat_samples[:,2])) + np.median(self.flat_samples[:,3])
@@ -49,3 +47,15 @@ class MCradvelminim(object):
         plt.errorbar(self.x,self.y,yerr=self.err, fmt='o')
         plt.plot(xplot, yplot)
         plt.show()
+
+def main():
+    x = np.loadtxt('radvel.txt',comments='#', usecols=0)
+    y =  np.loadtxt('radvel.txt',comments='#', usecols=1)
+    err =  np.loadtxt('radvel.txt',comments='#', usecols=2)
+    minimiser = MCradvelminim(x,y,err)
+    minimiser.run()
+    minimiser.getsamples()
+    minimiser.printvals()
+    minimiser.plotcurve()
+
+main()

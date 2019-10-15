@@ -17,7 +17,7 @@ class MCradvelminim(object):
 
     def logprior(self, theta):
         a, b, c, d, log_f = theta
-        if -200 < a < 200 and 0. < b < 5000. and 0 < c < 1000 and -1000 < d < 1000 and -10. <       log_f < 1.:
+        if -200 < a < 200 and 0. < b < 5000. and 0 < c < 1000 and -1000 < d < 1000 and -10. < log_f < 1.:
             return 0.0
         return -np.inf
 
@@ -31,7 +31,7 @@ class MCradvelminim(object):
         pos = [[0,100,0,0,0]] + [[.1,1,1,.1,.01]]*np.random.randn(50,5)
         self.nwalkers, self.ndim = pos.shape
         self.sampler = emcee.EnsembleSampler(self.nwalkers, self.ndim, self.logprob, args = (self.x,self.y,self.err))
-        self.sampler.run_mcmc(pos, 100000, progress=True)
+        self.sampler.run_mcmc(pos, 10000, progress=True)
 
     def getsamples(self):
         self.flat_samples = self.sampler.get_chain(discard=200, thin=15, flat=True)

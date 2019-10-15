@@ -43,7 +43,7 @@ class minimiser(object):
         return chisq
 
     def minchisq(self):
-        self.minimise = minuit(self.chisq, rp = .3, a = 8., inc=87., ecc=0.,fix_ecc=True,w=90.,\
+        self.minimise = minuit(self.chisq, rp = .3, a = 10., inc=87., ecc=0.,w=60.,\
         u1=0.1, u2=0.3, error_rp = .0001, error_a = .01, error_inc = .01,\
         error_ecc = .01, error_w = .01, error_u1 = .0001, error_u2 = .0001, errordef=1., limit_u1 = (-1,1), limit_u2 = (-1,1))
         fmin, param = self.minimise.migrad()

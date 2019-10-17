@@ -92,6 +92,7 @@ def initemcee_fixecc():
     nwalkers, ndim = pos.shape
     sampler = emcee.EnsembleSampler(nwalkers, ndim, logprob_fixecc, args = (x,y,err))
     return sampler, pos, ndim
+
 #sampler, pos, ndim = initemcee_fixecc()
 sampler, pos, ndim = initemcee_fitall()
 

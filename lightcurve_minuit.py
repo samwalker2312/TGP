@@ -28,7 +28,7 @@ class minimiser(object):
         self.params.ecc = 0.
         self.params.w = 90.
         self.params.u = [0.1, 0.3]
-        self.params.limb_dark = 'power2'
+        self.params.limb_dark = 'quadratic'
         self.m = batman.TransitModel(self.params, self.x)
 
     def chisq(self, rp, a, inc, ecc, w, u1, u2):

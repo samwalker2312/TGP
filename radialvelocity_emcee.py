@@ -10,14 +10,14 @@ class MCradvelminim(object):
         self.err = err
 
     def loglike(self, theta):
-        a, b, c, d, log_f = theta
-        model = a*np.sin(b*self.x+c)
-        sigma2 = self.err**2. + model**2.*np.exp(2*log_f)
-        return -.5*np.sum((self.y-model)**2./sigma2 + np.log(sigma2))
+        a, b, c, d = theta
+        model = a*np.sin(b*self.x+c) + d
+        sigma2 = self.err**2.
+        return -.5*np.sum((self.y-model)**2./sigma2)
 
     def logprior(self, theta):
-        a, b, c, d, log_f = theta
-        if -200 < a < 200 and 0. < b < 5000. and 0 < c < 1000 and -1000 < d < 1000 and -10. < log_f < 1.:
+        a, b, c, d = theta
+        if -200 < a < 200 and 0. < b < 5000. and 0 < c < 1000 and -10000 < d < 10000:
             return 0.0
         return -np.inf
 
@@ -28,16 +28,16 @@ class MCradvelminim(object):
         return lp + self.loglike(theta)
 
     def run(self):
-        pos = [[0,100,0,0,0]] + [[.1,1,1,.1,.01]]*np.random.randn(50,5)
+        pos = [[0,100,0,0]] + [[.1,1,1,.1]]*np.random.randn(50,4)
         self.nwalkers, self.ndim = pos.shape
         self.sampler = emcee.EnsembleSampler(self.nwalkers, self.ndim, self.logprob, args = (self.x,self.y,self.err))
-        self.sampler.run_mcmc(pos, 10000, progress=True)
+        self.sampler.run_mcmc(pos, 100000, progress=True)
 
     def getsamples(self):
         self.flat_samples = self.sampler.get_chain(discard=200, thin=15, flat=True)
 
     def printvals(self):
-        for i in range(self.ndim-1):
+        for i in range(self.ndim):
             print(np.median(self.flat_samples[:,i]))
 
     def plotcurve(self):

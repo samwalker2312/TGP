@@ -10,14 +10,14 @@ class MCradvelminim(object):
         self.err = err
 
     def loglike(self, theta):
-        a, b, c, d = theta
-        model = a*np.sin(b*self.x+c) + d
+        a, b, c = theta
+        model = a*np.sin(b*self.x+c)
         sigma2 = self.err**2.
         return -.5*np.sum((self.y-model)**2./sigma2)
 
     def logprior(self, theta):
-        a, b, c, d = theta
-        if -200 < a < 200 and 0. < b < 5000. and 0 < c < 1000 and -10000 < d < 10000:
+        a, b, c = theta
+        if 0 < a < 500 and 0. < b < 5000. and 0 < c < 1000:
             return 0.0
         return -np.inf
 
@@ -28,7 +28,7 @@ class MCradvelminim(object):
         return lp + self.loglike(theta)
 
     def run(self):
-        pos = [[0,100,0,0]] + [[.1,1,1,.1]]*np.random.randn(50,4)
+        pos = [[50,10,0]] + [[1,1,1]]*np.random.randn(50,3)
         self.nwalkers, self.ndim = pos.shape
         self.sampler = emcee.EnsembleSampler(self.nwalkers, self.ndim, self.logprob, args = (self.x,self.y,self.err))
         self.sampler.run_mcmc(pos, 100000, progress=True)
@@ -42,7 +42,7 @@ class MCradvelminim(object):
 
     def plotcurve(self):
         xplot = np.linspace(self.x[0],self.x[-1],500)
-        yplot = np.median(self.flat_samples[:,0])*np.sin(np.median(self.flat_samples[:,1])*xplot + np.median(self.flat_samples[:,2])) + np.median(self.flat_samples[:,3])
+        yplot = np.median(self.flat_samples[:,0])*np.sin(np.median(self.flat_samples[:,1])*xplot + np.median(self.flat_samples[:,2]))
         plt.figure()
         plt.errorbar(self.x,self.y,yerr=self.err, fmt='o')
         plt.plot(xplot, yplot)
@@ -55,7 +55,17 @@ def main():
     minimiser = MCradvelminim(x,y,err)
     minimiser.run()
     minimiser.getsamples()
-    minimiser.printvals()
+    #minimiser.printvals()
+    period = 2*np.pi/np.median(minimiser.flat_samples[:,1])
+    print("Period in days is " + str(period))
+    starmass = float(input("Input the mass of the host star: "))
+    G = 6.674e-11
+    planetradius = (starmass*G*period**2./(4.*np.pi**2.))**(1/3)
+    print("Radius in Rj is " + str(planetradius/(69911e3)))
+    planetvel = (G*starmass/planetradius)**.5
+    #print("Orbital velocity is " + str(planetvel))
+    planetmass = starmass*np.median(minimiser.flat_samples[:,0])/planetvel
+    print("Planet mass assuming zero inclination in Mj is " + str(np.abs(planetmass/(1.898e27))))
     minimiser.plotcurve()
 
 main()

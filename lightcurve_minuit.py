@@ -3,17 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import batman
 
-def main():
-    x = np.loadtxt('lightcurvedata.txt',comments='#', usecols=0)
-    starttime = -x[0]
-    x += starttime
-    y =  np.loadtxt('lightcurvedata.txt',comments='#', usecols=1)
-    err =  np.loadtxt('lightcurvedata.txt',comments='#', usecols=2)
-    minim = minimiser(x,y,err,starttime)
-    minim.minchisq()
-    minim.plot()
-
-class minimiser(object):
+class lightcurveminimiser_minuit(object):
 
     def __init__(self, x, y, err, starttime):
         self.x = x
@@ -27,8 +17,8 @@ class minimiser(object):
         self.params.inc = 87.
         self.params.ecc = 0.
         self.params.w = 90.
-        self.params.u = [0.1, 0.3]
-        self.params.limb_dark = 'quadratic'
+        self.params.u = [.1,.3]
+        self.params.limb_dark = 'uniform'
         self.m = batman.TransitModel(self.params, self.x)
 
     def chisq(self, rp, a, inc, ecc, w, u1, u2):
@@ -43,7 +33,7 @@ class minimiser(object):
         return chisq
 
     def minchisq(self):
-        self.minimise = minuit(self.chisq, rp = .3, a = 10., inc=87., ecc=0.,w=60.,\
+        self.minimise = minuit(self.chisq, rp = .3, a = 8.08, fix_a = True, inc=87., ecc=0.,w=60., limit_ecc = (0,1),\
         u1=0.1, u2=0.3, error_rp = .0001, error_a = .01, error_inc = .01,\
         error_ecc = .01, error_w = .01, error_u1 = .0001, error_u2 = .0001, errordef=1., limit_u1 = (-1,1), limit_u2 = (-1,1))
         fmin, param = self.minimise.migrad()
@@ -67,4 +57,13 @@ class minimiser(object):
         plt.plot(plotx, flux)
         plt.show()
 
+def main():
+    x = np.loadtxt('lightcurvedata.txt',comments='#', usecols=0)
+    starttime = -x[0]
+    x += starttime
+    y =  np.loadtxt('lightcurvedata.txt',comments='#', usecols=1)
+    err =  np.loadtxt('lightcurvedata.txt',comments='#', usecols=2)
+    minim = lightcurveminimiser_minuit(x,y,err,starttime)
+    minim.minchisq()
+    minim.plot()
 main()

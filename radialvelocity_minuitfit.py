@@ -7,7 +7,7 @@ time = np.loadtxt('radvel.txt',comments='#', usecols=0)
 vel =  np.loadtxt('radvel.txt',comments='#', usecols=1)
 err =  np.loadtxt('radvel.txt',comments='#', usecols=2)
 
-class minimiser(object):
+class radvelminimiser_minuit(object):
     def __init__(self, time, vel, err):
         self.time = time - time[0]
         self.vel = vel
@@ -42,7 +42,7 @@ class minimiser(object):
         plt.show()
 
 def main():
-    minim = minimiser(time, vel, err)
+    minim = radvelminimiser_minuit(time, vel, err)
     minim.minchisq()
     minim.plot()
 

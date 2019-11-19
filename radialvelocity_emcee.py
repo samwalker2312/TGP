@@ -29,7 +29,7 @@ class radvelminimiser_MCMC(object):
         return lp + self.loglike(theta)
 
     def run(self):
-        pos = [[50,1.,np.pi]] + .1*np.random.randn(100,3)
+        pos = [[80,1.,np.pi]] + .1*np.random.randn(100,3)
         self.nwalkers, self.ndim = pos.shape
         self.sampler = emcee.EnsembleSampler(self.nwalkers, self.ndim, self.logprob, args = (self.x,self.y,self.err))
         self.sampler.run_mcmc(pos, 100000, progress=True)

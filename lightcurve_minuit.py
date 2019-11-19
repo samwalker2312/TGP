@@ -18,7 +18,7 @@ class lightcurveminimiser_minuit(object):
         self.params.ecc = 0.
         self.params.w = 90.
         self.params.u = [.1,.3]
-        self.params.limb_dark = 'uniform'
+        self.params.limb_dark = 'quadratic'
         self.m = batman.TransitModel(self.params, self.x)
 
     def chisq(self, rp, a, inc, ecc, w, u1, u2):

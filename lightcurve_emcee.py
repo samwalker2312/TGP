@@ -14,7 +14,7 @@ class lightcurveminimiser_MCMC(object):
 
     def createmodel(self, period, limbdark, a):
         self.params = batman.TransitParams()
-        self.params.t0 = .5*(self.x[-1] - self.x[0])
+        self.params.t0 = 0
         self.params.per = period
         self.params.limb_dark = limbdark
         self.params.rp = .1
@@ -58,22 +58,26 @@ class lightcurveminimiser_MCMC(object):
     def logprior(self,theta):
         if self.params.limb_dark == 'uniform':
             t0, rp, inc, ecc, w = theta
-            if self.x[0]<t0<self.x[-1] and 0<rp<1 and 0<inc<90 and 0.<=ecc<1. and -180<w<180:
+            if self.x[0]<t0<self.x[-1] and 0<rp<1 and 0<inc<90 and 0.<=ecc<.95 and 0<w<360:
                 return 0.0
+
+        #edited for t0 == 0
         elif self.params.limb_dark == 'linear':
             t0, rp, inc, ecc, w, u1 = theta
             self.params.u = [u1]
-            if self.x[0]<t0<self.x[-1] and 0<rp<1 and 0<inc<90 and 0.<=ecc<1. and -180<w<180 and -1<u1<1:
-                return 0.0
+            #step = self.x[1]-self.x[0]
+            if self.x[0]<t0<self.x[-1] and 0<rp<1 and 0<inc<90 and 0.<=ecc<.95 and 0<w<360 and -1<u1<1:
+                return 0.
+
         elif self.params.limb_dark == 'nonlinear':
             t0, rp, inc, ecc, w, u1, u2, u3, u4 = theta
             self.params.u = [u1, u2, u3, u4]
-            if self.x[0]<t0<self.x[-1] and 0<rp<1 and 0<inc<90 and 0.<=ecc<1. and -180<w<180 and -1<u1<1 and -1<u2<1 and -1<u3<1 and -1<u4<1:
+            if self.x[0]<t0<self.x[-1] and 0<rp<1 and 0<inc<90 and 0.<=ecc<.95 and 0<w<360 and -1<u1<1 and -1<u2<1 and -1<u3<1 and -1<u4<1:
                 return 0.0
         else:
             t0, rp, inc, ecc, w, u1, u2 = theta
             self.params.u = [u1,u2]
-            if self.x[0]<t0<self.x[-1] and 0<rp<1 and 0<inc<90 and 0.<=ecc<1. and -180<w<180 and -1<u1<1 and -1<u2<1 and u1 + u2 < 1:
+            if self.x[0]<t0<self.x[-1] and 0<rp<1 and 0<inc<90 and 0.<=ecc<.95 and 0<w<360 and -1<u1<1 and -1<u2<1 and u1 + u2 < 1:
                 return 0.0
         return -np.inf
 
@@ -131,15 +135,18 @@ class lightcurveminimiser_MCMC(object):
         return lp + self.loglike_fixecc(theta,x,y,err)
 
     def initemcee_fitall(self):
-        t0_init = .5*(self.x[-1] - self.x[0])
+
+        ##changed t0_init for mirrored transit
+
+        t0_init = 0
         if self.params.limb_dark == 'uniform':
-            self.pos = [[t0_init, .1, 90., .1, 90.]] + 1e-3*np.random.randn(100,5)
+            self.pos = [[t0_init, .1, 85., .01, 90.]] + 1e-3*np.random.randn(100,5)
         elif self.params.limb_dark == 'linear':
-            self.pos = [[t0_init, .1, 90., .1, 90., .1]] + 1e-3*np.random.randn(100,6)
+            self.pos = [[t0_init, .1, 85., .01, 90., .1]] + [[.00001,.01,.1,.0001,.1,.01]]*np.random.randn(100,6)
         elif self.params.limb_dark == 'nonlinear':
-            self.pos = [[t0_init, .1, 90., .1, 90., .1, .1, .1, .1]] + 1e-3*np.random.randn(100,9)
+            self.pos = [[t0_init, .1, 85., .01, 90., .1, .1, .1, .1]] + 1e-3*np.random.randn(100,9)
         else:
-            self.pos = [[t0_init, .1, 90., .1, 90., .1, .1]] + 1e-3*np.random.randn(100,7)
+            self.pos = [[t0_init, .1, 85., .01, 90., .1, .1]] + 1e-3*np.random.randn(100,7)
         self.nwalkers, self.ndim = self.pos.shape
         self.sampler = emcee.EnsembleSampler(self.nwalkers, self.ndim, self.logprob, args = (self.x,self.y,self.err))
 
@@ -230,49 +237,63 @@ class lightcurveminimiser_MCMC(object):
         rp_err -= rp
         return rp, rp_err
 
+    def returnvalues(self):
+        values = []
+        for i in range(self.ndim):
+            val = np.percentile(self.flat_samples[:,i], (16, 50, 84))
+            val[0] = val[0] - val[1]
+            val[2] = val[2] - val[1]
+            values.append(val)
+        return np.array(values)
+
 def main():
-    x = np.loadtxt('lightcurvedata.txt',comments='#', usecols=0)
-    starttime = -x[0]
-    x += starttime
-    y =  np.loadtxt('lightcurvedata.txt',comments='#', usecols=1)
-    err =  np.loadtxt('lightcurvedata.txt',comments='#', usecols=2)
-    valuearray = np.zeros((8,5))
-    for i in range(0,8):
-        model = lightcurveminimiser_MCMC(x, y, err)
-        if i == 0:
-            model.createmodel(3.52, 'uniform', 79.86)
-        if i == 1:
-            model.createmodel(3.52, 'linear', 79.86)
-        if i == 2:
-            model.createmodel(3.52, 'nonlinear', 79.86)
-        if i == 3:
-            model.createmodel(3.52, 'quadratic', 79.86)
-        if i == 4:
-            model.createmodel(3.52, 'power2', 79.86)
-        if i == 5:
-            model.createmodel(3.52, 'exponential', 79.86)
-        if i == 6:
-            model.createmodel(3.52, 'logarithmic', 79.86)
-        if i == 7:
-            model.createmodel(3.52, 'squareroot', 79.86)
-        model.initemcee_fitall()
-        model.run(10000)
-        model.flattensamples(3000)
-        model.setfinalparams()
-        if i == 0:
-            model.plotcurve()
-            model.plotcorner()
-            model.plotwalkers()
-        print("\n-----------------------------------------------------\n")
+    readfile = 'LightCurveFinal.txt'
+    lightcurve_x = np.loadtxt(readfile,comments='#', usecols=0)
+    #starttime = -lightcurve_x[0]
+    #lightcurve_x += starttime
+    lightcurve_y =  np.loadtxt(readfile,comments='#', usecols=1)
+    lightcurve_err =  np.loadtxt(readfile,comments='#', usecols=2)
 
-        valuearray[i,0] = model.params.t0
-        valuearray[i,1] = model.params.rp
-        valuearray[i,2] = model.params.inc
-        valuearray[i,3] = model.params.ecc
-        valuearray[i,4] = model.params.w
+    data_x = lightcurve_x[34:] - lightcurve_x[33]
+    data_y = lightcurve_y[34:]
+    data_err = lightcurve_err[34:]
 
-    print(valuearray)
-    print("\n-----------------------------------------------------\n")
-    newarray = valuearray
-    newarray[:] /= newarray[3,:]
-    print(newarray)
+    start_x = -data_x[::-1]
+    start_y = data_y[::-1]
+    start_err = data_err[::-1]
+
+    final_x = np.concatenate((start_x, data_x))/(24*3600)
+    final_y = np.concatenate((start_y, data_y))
+    final_err = np.concatenate((start_err, data_err))
+
+    #using stellar radius = 1R_sun from wikipedia
+    starrad = 695700e3
+    starrad_err = .03*695700e3*np.array([1,1])
+
+    radveldata = np.loadtxt('cuillin/radveloutput.txt')
+    period = radveldata[1,1]
+    orbrad = radveldata[-1,1]/starrad
+    limbdark = 'uniform'
+    lightcurveminimiser = lightcurveminimiser_MCMC(final_x, final_y, final_err)
+
+    lightcurveminimiser.createmodel(period, limbdark, orbrad)
+    #lightcurveminimiser.initemcee_fixecc()
+    lightcurveminimiser.initemcee_fitall()
+    iter = 10000
+    lightcurveminimiser.run(iter)
+    lightcurveminimiser.flattensamples(int(.3*iter))
+    lightcurveminimiser.setfinalparams()
+
+    lightcurveminimiser.plotcurve()
+    lightcurveminimiser.plotwalkers()
+    lightcurveminimiser.plotcorner()
+
+    values = lightcurveminimiser.returnvalues()
+    #print(radveldata)
+    print(values)
+    finaldata = np.concatenate((radveldata, values))
+    #print(finaldata)
+    filename = 'finaldata_' + str(lightcurveminimiser.params.limb_dark) + '.txt'
+    np.savetxt(filename, finaldata)
+
+main()

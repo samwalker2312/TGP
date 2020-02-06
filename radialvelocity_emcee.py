@@ -197,7 +197,7 @@ class radvelminimiser_MCMC(object):
         c = values[2,1]
         d = values[3,1]
         factor = 2*np.pi/b
-        xplot = np.linspace(0,2.5)
+        xplot = np.linspace(-.5,2.5)
         yplot = a*np.sin(factor*(xplot + c)) + d
         model = a*np.sin(factor*(self.x + c)) + d
         chisq = np.sum(((self.y-model)**2.)/self.err)
@@ -209,12 +209,14 @@ class radvelminimiser_MCMC(object):
         ax2 = fig.add_axes((.1,.1,.8,.2))
         ax2.set_xlabel(r"\textrm{Time (days)}")
         ax1.set_ylabel(r"$\textrm{Velocity (ms}^{-1})$")
-        ax2.set_ylabel(r"$\textrm{Residuals (ms}^{-1})$")
+        ax2.set_ylabel(r"$\textrm{Residuals}$")
         ax1.errorbar(self.x,self.y,yerr=self.err, fmt='o', mfc='black', mec='black', ecolor='black')
         ax2.errorbar(self.x, (model-self.y), yerr = self.err, fmt='o', mfc='black', mec='black', ecolor='black')
         ax1.plot(xplot, yplot, color='black')
         ax2.plot(xplot, np.zeros_like(xplot), ':',color='black')
         plt.savefig('cuillin/radvel_curve.png')
+
+        print('Saved!')
 
         reader = emcee.backends.HDFBackend('cuillin/cuillin_sampler.h5')
         tau = reader.get_autocorr_time()
@@ -223,7 +225,7 @@ class radvelminimiser_MCMC(object):
         sampler = reader.get_chain(discard = burnin, flat=True, thin=thin)
 
         labels = [r'$\textrm{Amplitude}$', r'$\textrm{Period}$', r'$\Delta\textrm{Phase}$', r'$\gamma$']
-        fig = corner.corner(sampler, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 16}, smooth1d = True)
+        fig = corner.corner(sampler, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 16}, label_kwargs={"fontsize": 16}, smooth1d = True)
         plt.savefig('cuillin/radvel_corner.png')
 
 

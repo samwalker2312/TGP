@@ -99,17 +99,10 @@ class radvelminimiser_MCMC(object):
             print(str(val[1]) + ' +' + str(val[2]-val[1]) + " " + str(val[0]-val[1]))
 
     def plotcurve(self):
-        yplot = np.median(self.flat_samples[:,0])*np.sin(factor*(xplot + np.median(self.flat_samples[:,2]))) + np.median(self.flat_samples[:,3])
-        fig = plt.figure()
-        ax1 = fig.add_subplot(1,1,1)
-        ax1.set_xlabel(r"\textrm{Time (days)}")
-        ax1.set_ylabel(r"$\textrm{Velocity (ms}^{-1})$")
-        ax1.errorbar(self.x,self.y,yerr=self.err, fmt='o', mfc='black', mec='black', ecolor='black')
-        ax1.plot(xplot, yplot, color='black')
-        plt.savefig('radvel_curve.png')
-
         factor = 2*np.pi/np.median(self.flat_samples[:,1])
         xplot = np.linspace(-.5,2.5)
+        yplot = np.median(self.flat_samples[:,0])*np.sin(factor*(xplot + np.median(self.flat_samples[:,2]))) + np.median(self.flat_samples[:,3])
+        
         model = np.median(self.flat_samples[:,0])*np.sin(factor*(self.x + np.median(self.flat_samples[:,2]))) + np.median(self.flat_samples[:,3])
         chisq = np.sum(((self.y-model)**2.)/self.err)
         print(chisq)
@@ -245,8 +238,8 @@ class radvelminimiser_MCMC(object):
         thin = int(0.5 * np.min(tau))
         sampler = reader.get_chain(discard = burnin, flat=True, thin=thin)
 
-        labels = [r'$\textrm{Amplitude}$', r'$\textrm{Period}$', r'$\Delta\textrm{Phase}$', r'$\gamma$']
-        fig = corner.corner(sampler, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 16}, label_kwargs={"fontsize": 16}, smooth1d = True)
+        labels = [r'$K$', r'$P$', r'$C$', r'$\gamma$']
+        fig = corner.corner(sampler, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 36}, label_kwargs={"fontsize": 36}, smooth1d = True)
         plt.savefig('cuillin/radvel_corner.png')
 
 

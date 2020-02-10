@@ -181,16 +181,42 @@ class lightcurveminimiser_MCMC(object):
         self.flat_samples = self.sampler.get_chain(discard=discardnumb, thin=15, flat=True)
 
     def plotcorner(self):
-        fig = corner.corner(self.flat_samples)
-        plt.show()
+        labels = [r'$t_0$', r'$\textrm{R}_{\textrm{p}}$', r'$i$']
+        if self.params.ecc == self.initialecc:
+            continue
+        else:
+            extralabels = [r'$e$', r'$\omega$']
+            labels.extend(extralabels)
+        if self.params.limb_dark == 'uniform':
+            continue
+        elif self.params.limb_dark == 'linear':
+            labels.append(r'$\textrm{c}_1$')
+        elif self.params.limb_dark == 'nonlinear':
+            extralabels = [r'$\textrm{c}_1$',r'$\textrm{c}_2$',r'$\textrm{c}_3$',r'$\textrm{c}_4$']
+            labels.extend(extralabels)
+        else:
+            extralabels = [r'$\textrm{c}_1$',r'$\textrm{c}_2$']
+            labels.extend(extralabels)
+
+        fig = corner.corner(self.flat_samples, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 20}, smooth1d = True, label_kwargs={'fontsize':20})
+        plt.savefig('lightcurve_corner.png')
 
     def plotcurve(self):
-        plt.figure()
-        plt.errorbar(self.x,self.y,yerr=self.err, fmt='o')
         plotx = np.linspace(self.x[0], self.x[-1], 500)
         plotmodel = batman.TransitModel(self.params, plotx)
-        plt.plot(plotx, plotmodel.light_curve(self.params))
-        plt.show()
+        model = batman.TransitModel(self.params, self.x)
+
+        fig = plt.figure()
+        ax1 = fig.add_axes((.1,.3,.8,.6))
+        ax2 = fig.add_axes((.1,.1,.8,.2))
+        ax2.set_xlabel(r'$\textrm{Time (days) from}~t_0$')
+        ax1.set_ylabel(r'$\textrm{Flux relative to final observation}$')
+        ax2.set_ylabel(r"$\textrm{Residuals}$")
+        ax1.errorbar(self.x,self.y,yerr=self.err, fmt='o', mfc='black', mec='black', ecolor='black')
+        ax2.errorbar(self.x, (model-self.y), yerr = self.err, fmt='o', mfc='black', mec='black', ecolor='black')
+        ax1.plot(plotx, plotmodel, color='black')
+        ax2.plot(plotx, np.zeros_like(xplot), ':',color='black')
+        plt.savefig('radvel_curve.png')
 
     def setfinalparams(self):
         self.params.t0 = np.median(self.flat_samples[:,0])

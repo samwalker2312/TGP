@@ -90,7 +90,6 @@ class radvelminimiser_MCMC(object):
     def plotcorner(self):
         labels = [r'$\textrm{Amplitude}$', r'$\textrm{Period}$', r'$\Delta\textrm{Phase}$', r'$\gamma$']
         fig = corner.corner(self.flat_samples, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 20}, smooth1d = True, label_kwargs={'fontsize':20})
-        #fig = corner.corner(self.flat_samples, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True)
         plt.savefig('radvel_corner.png')
 
     def printvals(self):
@@ -102,7 +101,7 @@ class radvelminimiser_MCMC(object):
         factor = 2*np.pi/np.median(self.flat_samples[:,1])
         xplot = np.linspace(-.5,2.5)
         yplot = np.median(self.flat_samples[:,0])*np.sin(factor*(xplot + np.median(self.flat_samples[:,2]))) + np.median(self.flat_samples[:,3])
-        
+
         model = np.median(self.flat_samples[:,0])*np.sin(factor*(self.x + np.median(self.flat_samples[:,2]))) + np.median(self.flat_samples[:,3])
         chisq = np.sum(((self.y-model)**2.)/self.err)
         print(chisq)

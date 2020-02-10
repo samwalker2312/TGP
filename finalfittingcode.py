@@ -90,12 +90,14 @@ class derivedparams(object):
 
 
 def main():
-    startemp = 5850
-    startemp_err = np.array([50,50])
-    starmass = 2.08e30
-    starmass_err = 3e28*np.array([1,1])
-    starrad = 695700e3
-    starrad_err = .03*695700e3*np.array([1,1])
+    #using James 8/2/20 vals
+    startemp = 5937
+    startemp_err = 659*np.array([1,1])
+    starmass = 0.9*1.98847e30
+    starmass_err = 0.2*1.98847e30*np.array([1,1])
+    starrad = 1.06*695700e3
+    starrad_err = .15*695700e3*np.array([1,1])
+    
     filename = 'finaldata_uniform.txt'
     dervparam = derivedparams(filename)
     dervparam.printvalsinrightunits(starrad,starrad_err)

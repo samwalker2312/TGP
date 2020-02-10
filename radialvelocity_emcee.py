@@ -251,8 +251,9 @@ def main():
     print(values)
     minimiser.calculateperiod()
 
-    starmass = 0.983 * 1.989e30
-    starmass_err = 0.061 * 1.989e30*np.array([1,1])
+    #using James 8/2/20 vals
+    starmass = 0.9 * 1.98847e30
+    starmass_err = 0.2 * 1.98847e30*np.array([1,1])
 
     orbrad = minimiser.calculateorbrad(starmass, starmass_err)
     orbrad = np.array([orbrad])

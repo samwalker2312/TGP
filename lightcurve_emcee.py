@@ -266,9 +266,9 @@ def main():
     final_y = np.concatenate((start_y, data_y))
     final_err = np.concatenate((start_err, data_err))
 
-    #using stellar radius = 1R_sun from wikipedia
-    starrad = 695700e3
-    starrad_err = .03*695700e3*np.array([1,1])
+    #using James values from 8/2/20
+    starrad = 1.06*695700e3
+    starrad_err = .15*695700e3*np.array([1,1])
 
     radveldata = np.loadtxt('cuillin/radveloutput.txt')
     period = radveldata[1,1]

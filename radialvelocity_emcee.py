@@ -221,6 +221,7 @@ class radvelminimiser_MCMC(object):
         ax2.set_xlabel(r"\textrm{Time (days)}")
         ax1.set_ylabel(r"$\textrm{Velocity (ms}^{-1})$")
         ax2.set_ylabel(r"$\textrm{Residuals}$")
+        ax1.get_xaxis().set_ticks([])
         ax1.set_xlim(-.5,2.5)
         ax2.set_xlim(-.5,2.5)
         ax1.errorbar(self.x,self.y,yerr=self.err, fmt='o', mfc='black', mec='black', ecolor='black')
@@ -238,11 +239,8 @@ class radvelminimiser_MCMC(object):
         sampler = reader.get_chain(discard = burnin, flat=True, thin=thin)
 
         labels = [r'$K$', r'$P$', r'$C$', r'$\gamma$']
-        fig = corner.corner(sampler, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 36}, label_kwargs={"fontsize": 36}, smooth1d = True)
+        fig = corner.corner(sampler, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 28}, label_kwargs={"fontsize": 28}, smooth1d = True)
         plt.savefig('cuillin/radvel_corner.png')
-
-
-
 
 def main():
     x = np.loadtxt('tres2b_rv.dat',comments='#', usecols=0)

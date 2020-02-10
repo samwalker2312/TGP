@@ -183,12 +183,12 @@ class lightcurveminimiser_MCMC(object):
     def plotcorner(self):
         labels = [r'$t_0$', r'$\textrm{R}_{\textrm{p}}$', r'$i$']
         if self.params.ecc == self.initialecc:
-            continue
+            pass
         else:
             extralabels = [r'$e$', r'$\omega$']
             labels.extend(extralabels)
         if self.params.limb_dark == 'uniform':
-            continue
+            pass
         elif self.params.limb_dark == 'linear':
             labels.append(r'$\textrm{c}_1$')
         elif self.params.limb_dark == 'nonlinear':
@@ -212,6 +212,7 @@ class lightcurveminimiser_MCMC(object):
         ax2.set_xlabel(r'$\textrm{Time (days) from}~t_0$')
         ax1.set_ylabel(r'$\textrm{Flux relative to final observation}$')
         ax2.set_ylabel(r"$\textrm{Residuals}$")
+        ax1.get_xaxis().set_ticks([])
         ax1.errorbar(self.x,self.y,yerr=self.err, fmt='o', mfc='black', mec='black', ecolor='black')
         ax2.errorbar(self.x, (model-self.y), yerr = self.err, fmt='o', mfc='black', mec='black', ecolor='black')
         ax1.plot(plotx, plotmodel, color='black')

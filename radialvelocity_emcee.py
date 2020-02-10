@@ -89,7 +89,7 @@ class radvelminimiser_MCMC(object):
 
     def plotcorner(self):
         labels = [r'$\textrm{Amplitude}$', r'$\textrm{Period}$', r'$\Delta\textrm{Phase}$', r'$\gamma$']
-        fig = corner.corner(self.flat_samples, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 13}, smooth1d = True)
+        fig = corner.corner(self.flat_samples, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 20}, smooth1d = True, label_kwargs={'fontsize':20})
         #fig = corner.corner(self.flat_samples, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True)
         plt.savefig('radvel_corner.png')
 
@@ -99,8 +99,6 @@ class radvelminimiser_MCMC(object):
             print(str(val[1]) + ' +' + str(val[2]-val[1]) + " " + str(val[0]-val[1]))
 
     def plotcurve(self):
-        xplot = np.linspace(self.x[0],self.x[-1],5000)
-        factor = 2*np.pi/np.median(self.flat_samples[:,1])
         yplot = np.median(self.flat_samples[:,0])*np.sin(factor*(xplot + np.median(self.flat_samples[:,2]))) + np.median(self.flat_samples[:,3])
         fig = plt.figure()
         ax1 = fig.add_subplot(1,1,1)
@@ -108,6 +106,27 @@ class radvelminimiser_MCMC(object):
         ax1.set_ylabel(r"$\textrm{Velocity (ms}^{-1})$")
         ax1.errorbar(self.x,self.y,yerr=self.err, fmt='o', mfc='black', mec='black', ecolor='black')
         ax1.plot(xplot, yplot, color='black')
+        plt.savefig('radvel_curve.png')
+
+        factor = 2*np.pi/np.median(self.flat_samples[:,1])
+        xplot = np.linspace(-.5,2.5)
+        model = np.median(self.flat_samples[:,0])*np.sin(factor*(self.x + np.median(self.flat_samples[:,2]))) + np.median(self.flat_samples[:,3])
+        chisq = np.sum(((self.y-model)**2.)/self.err)
+        print(chisq)
+        print(chi2.sf(chisq, 7))
+
+        fig = plt.figure()
+        ax1 = fig.add_axes((.1,.3,.8,.6))
+        ax2 = fig.add_axes((.1,.1,.8,.2))
+        ax2.set_xlabel(r"\textrm{Time (days)}")
+        ax1.set_ylabel(r"$\textrm{Velocity (ms}^{-1})$")
+        ax2.set_ylabel(r"$\textrm{Residuals}$")
+        ax1.set_xlim(-.5,2.5)
+        ax2.set_xlim(-.5,2.5)
+        ax1.errorbar(self.x,self.y,yerr=self.err, fmt='o', mfc='black', mec='black', ecolor='black')
+        ax2.errorbar(self.x, (model-self.y), yerr = self.err, fmt='o', mfc='black', mec='black', ecolor='black')
+        ax1.plot(xplot, yplot, color='black')
+        ax2.plot(xplot, np.zeros_like(xplot), ':',color='black')
         plt.savefig('radvel_curve.png')
 
     def plotcurve_exofast(self):
@@ -210,6 +229,8 @@ class radvelminimiser_MCMC(object):
         ax2.set_xlabel(r"\textrm{Time (days)}")
         ax1.set_ylabel(r"$\textrm{Velocity (ms}^{-1})$")
         ax2.set_ylabel(r"$\textrm{Residuals}$")
+        ax1.set_xlim(-.5,2.5)
+        ax2.set_xlim(-.5,2.5)
         ax1.errorbar(self.x,self.y,yerr=self.err, fmt='o', mfc='black', mec='black', ecolor='black')
         ax2.errorbar(self.x, (model-self.y), yerr = self.err, fmt='o', mfc='black', mec='black', ecolor='black')
         ax1.plot(xplot, yplot, color='black')
@@ -273,7 +294,7 @@ def printchisq():
     minimiser = radvelminimiser_MCMC(x,y,err)
     minimiser.plotfromreadin()
 
-printchisq()
+#printchisq()
 
 def exofastmain():
     x = np.loadtxt('tres2b_rv.dat',comments='#', usecols=0)
@@ -294,8 +315,9 @@ def exofastmain():
 #exofastmain()
 
 def rerunmain():
-    starmass = 0.983 * 1.989e30
-    starmass_err = 0.061 * 1.989e30*np.array([1,1])
+    #using James 8/2/20 vals
+    starmass = 0.9 * 1.98847e30
+    starmass_err = 0.2 * 1.98847e30*np.array([1,1])
 
     values = np.loadtxt('radveloutput.txt')
     period = values[1,1]

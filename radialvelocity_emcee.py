@@ -286,7 +286,7 @@ def printchisq():
     minimiser = radvelminimiser_MCMC(x,y,err)
     minimiser.plotfromreadin()
 
-#printchisq()
+printchisq()
 
 def exofastmain():
     x = np.loadtxt('tres2b_rv.dat',comments='#', usecols=0)
@@ -316,10 +316,11 @@ def rerunmain():
     period_err = np.array([values[1,0], values[1,2]])
     print(period)
     print(period_err)
-    input()
-    x = np.loadtxt('radvel.txt',comments='#', usecols=0)
-    y =  np.loadtxt('radvel.txt',comments='#', usecols=1)
-    err =  np.loadtxt('radvel.txt',comments='#', usecols=2)
+    #input()
+    filename = 'tres2b_rv.dat'
+    x = np.loadtxt(filename,comments='#', usecols=0)
+    y =  np.loadtxt(filename,comments='#', usecols=1)
+    err =  np.loadtxt(filename,comments='#', usecols=2)
     minimiser = radvelminimiser_MCMC(x,y,err)
     minimiser.setperiod(period, period_err)
     orbrad = minimiser.calculateorbrad(starmass, starmass_err)

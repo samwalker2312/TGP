@@ -199,7 +199,7 @@ class lightcurveminimiser_MCMC(object):
             labels.extend(extralabels)
 
         fig = corner.corner(self.flat_samples, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 20}, smooth1d = True, label_kwargs={'fontsize':20})
-        plt.savefig('lightcurve_corner.png')
+        plt.savefig('lightcurve_corner.eps')
 
     def plotcurve(self):
         plotx = np.linspace(self.x[0], self.x[-1], 500)
@@ -209,15 +209,15 @@ class lightcurveminimiser_MCMC(object):
         fig = plt.figure()
         ax1 = fig.add_axes((.1,.3,.8,.6))
         ax2 = fig.add_axes((.1,.1,.8,.2))
-        ax2.set_xlabel(r'$\textrm{Time (days) from}~t_0$')
-        ax1.set_ylabel(r'$\textrm{Flux relative to final observation}$')
+        ax2.set_xlabel(r'$\textrm{Days from}~t_0$')
+        ax1.set_ylabel(r'$\textrm{Relative flux}$')
         ax2.set_ylabel(r"$\textrm{Residuals}$")
         ax1.get_xaxis().set_ticks([])
         ax1.errorbar(self.x,self.y,yerr=self.err, fmt='o', mfc='black', mec='black', ecolor='black')
-        ax2.errorbar(self.x, (model-self.y), yerr = self.err, fmt='o', mfc='black', mec='black', ecolor='black')
-        ax1.plot(plotx, plotmodel, color='black')
-        ax2.plot(plotx, np.zeros_like(xplot), ':',color='black')
-        plt.savefig('radvel_curve.png')
+        ax2.errorbar(self.x, (model.light_curve(self.params)-self.y), yerr = self.err, fmt='o', mfc='black', mec='black', ecolor='black')
+        ax1.plot(plotx, plotmodel.light_curve(self.params), color='black')
+        ax2.plot(plotx, np.zeros_like(plotmodel.light_curve(self.params)), ':',color='black')
+        plt.savefig('lightcurve.eps')
 
     def setfinalparams(self):
         self.params.t0 = np.median(self.flat_samples[:,0])
@@ -297,10 +297,10 @@ def main():
     starrad = 1.06*695700e3
     starrad_err = .15*695700e3*np.array([1,1])
 
-    radveldata = np.loadtxt('cuillin/radveloutput.txt')
+    radveldata = np.loadtxt('radveloutput.txt')
     period = radveldata[1,1]
     orbrad = radveldata[-1,1]/starrad
-    limbdark = 'uniform'
+    limbdark = 'linear'
     lightcurveminimiser = lightcurveminimiser_MCMC(final_x, final_y, final_err)
 
     lightcurveminimiser.createmodel(period, limbdark, orbrad)

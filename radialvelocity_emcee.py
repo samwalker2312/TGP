@@ -224,11 +224,12 @@ class radvelminimiser_MCMC(object):
         ax1.get_xaxis().set_ticks([])
         ax1.set_xlim(-.5,2.5)
         ax2.set_xlim(-.5,2.5)
+        ax2.set_ylim(-20,20)
         ax1.errorbar(self.x,self.y,yerr=self.err, fmt='o', mfc='black', mec='black', ecolor='black')
         ax2.errorbar(self.x, (model-self.y), yerr = self.err, fmt='o', mfc='black', mec='black', ecolor='black')
         ax1.plot(xplot, yplot, color='black')
         ax2.plot(xplot, np.zeros_like(xplot), ':',color='black')
-        plt.savefig('cuillin/radvel_curve.png')
+        plt.savefig('cuillin/radvel_curve.eps')
 
         print('Saved!')
 
@@ -240,7 +241,7 @@ class radvelminimiser_MCMC(object):
 
         labels = [r'$K$', r'$P$', r'$C$', r'$\gamma$']
         fig = corner.corner(sampler, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 28}, label_kwargs={"fontsize": 28}, smooth1d = True)
-        plt.savefig('cuillin/radvel_corner.png')
+        plt.savefig('cuillin/radvel_corner.eps')
 
 def main():
     x = np.loadtxt('tres2b_rv.dat',comments='#', usecols=0)

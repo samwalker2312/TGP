@@ -6,21 +6,22 @@ class derivedparams(object):
         self.data = np.loadtxt(filename)
 
     def calculateplanetmass(self, starmass, starmass_err):
-        a = self.data[0,1]
-        a_err = np.array([self.data[0,0],self.data[0,2]])
-        k = (6.674e-11)**(-0.5)
+        v = self.data[0,1]
+        v_err = np.array([self.data[0,0],self.data[0,2]])
+        period = self.data[1,1]*24*3600
+        period_err = np.array([self.data[1,0],self.data[1,2]])*24*3600
         i = self.data[7,1]
         i_err = np.array([self.data[7,0],self.data[7,2]])
         i *= np.pi/180
         i_err *= np.pi/180
         self.orbitalradius = np.abs(self.data[4,1])
-        self.orbrad_err = np.array([self.data[4,0],self.data[4,2]])
+        self.orbitalradius_err = np.array([self.data[4,0],self.data[4,2]])
         sini = np.sin(i)
         sini_err = i_err*np.cos(i)
-        self.planetmass = k*(starmass**.5)*(self.orbitalradius**.5)*a/sini
-        self.planetmass_err = (k/sini)*np.sqrt( (self.orbitalradius*(a*starmass_err)**2./(4*starmass)) \
-         + (starmass*(a*self.orbrad_err)**2./(4*self.orbitalradius)) + (self.orbitalradius*starmass*(a_err**2.)) \
-          + (self.orbitalradius*starmass*(a**2.)*(sini_err**2.)*(np.tan(i)**-2.)) )
+
+        self.planetmass = starmass*period*v/(2*np.pi*self.orbitalradius*sini)
+        self.planetmass_err = self.planetmass*np.sqrt((period_err/period)**2. + (v_err/v)**2. + (self.orbitalradius_err/self.orbitalradius)**2. + (sini_err/sini)**2.)
+
         m = self.planetmass/1.898e27
         m_err = self.planetmass_err/1.898e27
         print('Planet mass in Jupiter masses is ' + str(m) + ' +' + str(m_err[1]) + ' -' + str(m_err[0]))
@@ -41,10 +42,10 @@ class derivedparams(object):
     def calcefftemp(self, startemp, startemp_err, starrad, starrad_err):
         orbitalradius = self.data[4,1]
         orbitalradius_err = np.array([self.data[4,0], self.data[4,2]])
-        teq = startemp*(.7**.25)*(.5*starrad/orbitalradius)**.5
+        teq = startemp*(.5*starrad/orbitalradius)**.5
         radoverorbrad = starrad/orbitalradius
         radoverorbrad_err = (radoverorbrad)*np.sqrt((starrad_err/starrad)**2. + (orbitalradius_err/orbitalradius)**2.)
-        teq_err = (.7**.25)*np.sqrt( (.5*radoverorbrad*startemp_err**2.) + ((startemp**2.)/(8*radoverorbrad) * (radoverorbrad_err**2.)) )
+        teq_err = np.sqrt( (.5*radoverorbrad*startemp_err**2.) + ((startemp**2.)/(8*radoverorbrad) * (radoverorbrad_err**2.)) )
         print("Equilibrium temp. in K is " + str(teq) + ' +' + str(teq_err[1]) + ' -' + str(teq_err[0]))
 
     def printvalsinrightunits(self, starrad, starrad_err):
@@ -74,6 +75,7 @@ class derivedparams(object):
 
         rp = self.data[6,1]*starrad/7.1492e7
         rp_error = rp*np.sqrt((np.array([self.data[6,0], self.data[6,2]])/self.data[6,1])**2. + (starrad_err/starrad)**2.)
+        print('Planetary radius in stellar radii = ' + str(self.data[6,1]) + ' +' + str(self.data[6,2]) + ' -' + str(self.data[6,0]))
         print('Planetary radius in Jupiter radii = ' + str(rp) + ' +' + str(rp_error[1]) + ' -' + str(rp_error[0]))
 
         inc = self.data[7,1]
@@ -88,17 +90,16 @@ class derivedparams(object):
         w_error = np.abs(np.array([self.data[9,0], self.data[9,2]]))
         print('w in degrees = ' + str(w) + ' +' + str(w_error[1]) + ' -' + str(w_error[0]))
 
-
 def main():
     #using James 8/2/20 vals
-    startemp = 5937
-    startemp_err = 659*np.array([1,1])
-    starmass = 0.9*1.98847e30
-    starmass_err = 0.2*1.98847e30*np.array([1,1])
+    startemp = 5749.6
+    startemp_err = 336.4*np.array([1,1])
+    starmass = 0.912 * 1.98847e30
+    starmass_err = 1.98847e30*np.array([0.172,0.378])
     starrad = 1.06*695700e3
-    starrad_err = .15*695700e3*np.array([1,1])
-    
-    filename = 'finaldata_uniform.txt'
+    starrad_err = 695700e3*np.array([0.09,0.38])
+
+    filename = 'finaldata_linear.txt'
     dervparam = derivedparams(filename)
     dervparam.printvalsinrightunits(starrad,starrad_err)
     dervparam.calculateplanetmass(starmass, starmass_err)

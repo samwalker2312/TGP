@@ -116,7 +116,7 @@ class radvelminimiser_MCMC(object):
         ax1.set_xlim(-.5,2.5)
         ax2.set_xlim(-.5,2.5)
         ax1.errorbar(self.x,self.y,yerr=self.err, fmt='o', mfc='black', mec='black', ecolor='black')
-        ax2.errorbar(self.x, (model-self.y), yerr = self.err, fmt='o', mfc='black', mec='black', ecolor='black')
+        ax2.errorbar(self.x, -(model-self.y), yerr = self.err, fmt='o', mfc='black', mec='black', ecolor='black')
         ax1.plot(xplot, yplot, color='black')
         ax2.plot(xplot, np.zeros_like(xplot), ':',color='black')
         plt.savefig('radvel_curve.png')
@@ -202,17 +202,47 @@ class radvelminimiser_MCMC(object):
         self.period_err = period_err*24*3600
 
     def plotfromreadin(self):
-        values = np.loadtxt('cuillin/radveloutput.txt')
+
+        reader = emcee.backends.HDFBackend('cuillin/cuillin_sampler.h5')
+        tau = reader.get_autocorr_time()
+        burnin = int(2 * np.max(tau))
+        thin = int(0.5 * np.min(tau))
+        sampler = reader.get_chain(discard = burnin, flat=True, thin=thin)
+
+        values = []
+        for i in range(4):
+            val = np.percentile(sampler[:,i], (16,50,84))
+            val[0] = val[0] - val[1]
+            val[2] = val[2] - val[1]
+            values.append(val)
+
+        values = np.array(values)
+
         a = values[0,1]
         b = values[1,1]
         c = values[2,1]
         d = values[3,1]
+
+        self.setperiod(b, np.array([values[1,0], values[1,2]]))
+        starmass = 0.912 * 1.98847e30
+        starmass_err = 1.98847e30*np.array([0.172,0.378])
+        orbrad = self.calculateorbrad(starmass, starmass_err)
+        orbrad = np.array([orbrad])
+        values = np.concatenate((values, orbrad))
+        print(values)
+        np.savetxt('radveloutput.txt', values)
+        np.savetxt('cuillin/radveloutput.txt', values)
+
         factor = 2*np.pi/b
         xplot = np.linspace(-.5,2.5)
         yplot = a*np.sin(factor*(xplot + c)) + d
         model = a*np.sin(factor*(self.x + c)) + d
-        chisq = np.sum(((self.y-model)**2.)/self.err)
+        sigma2 = self.err**2.
+        sum = (self.y-model)**2.
+        sum /= sigma2
+        chisq = np.sum(sum)
         print(chisq)
+        print(chisq/7)
         print(chi2.sf(chisq, 7))
 
         fig = plt.figure()
@@ -229,19 +259,16 @@ class radvelminimiser_MCMC(object):
         ax2.errorbar(self.x, (model-self.y), yerr = self.err, fmt='o', mfc='black', mec='black', ecolor='black')
         ax1.plot(xplot, yplot, color='black')
         ax2.plot(xplot, np.zeros_like(xplot), ':',color='black')
-        plt.savefig('cuillin/radvel_curve.eps')
+        plt.savefig('finalplots/radvel_curve.png')
+        plt.savefig('finalplots/radvel_curve.eps')
 
         print('Saved!')
 
-        reader = emcee.backends.HDFBackend('cuillin/cuillin_sampler.h5')
-        tau = reader.get_autocorr_time()
-        burnin = int(2 * np.max(tau))
-        thin = int(0.5 * np.min(tau))
-        sampler = reader.get_chain(discard = burnin, flat=True, thin=thin)
-
         labels = [r'$K$', r'$P$', r'$C$', r'$\gamma$']
-        fig = corner.corner(sampler, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 28}, label_kwargs={"fontsize": 28}, smooth1d = True)
-        plt.savefig('cuillin/radvel_corner.eps')
+        fig = corner.corner(sampler, labels=labels, quantiles = [0.16, .5, .84], show_titles = True, use_math_text = True, smooth = True, title_kwargs={"fontsize": 24}, label_kwargs={"fontsize": 24}, smooth1d = True)
+        plt.savefig('finalplots/radvel_corner.png')
+        plt.savefig('finalplots/radvel_corner.eps')
+
 
 def main():
     x = np.loadtxt('tres2b_rv.dat',comments='#', usecols=0)
@@ -263,9 +290,9 @@ def main():
     print(values)
     minimiser.calculateperiod()
 
-    #using James 8/2/20 vals
-    starmass = 0.9 * 1.98847e30
-    starmass_err = 0.2 * 1.98847e30*np.array([1,1])
+    #using James paper vals
+    starmass = 0.912 * 1.98847e30
+    starmass_err = 1.98847e30*np.array([0.172,0.378])
 
     orbrad = minimiser.calculateorbrad(starmass, starmass_err)
     orbrad = np.array([orbrad])
@@ -285,7 +312,6 @@ def printchisq():
     minimiser = radvelminimiser_MCMC(x,y,err)
     minimiser.plotfromreadin()
 
-printchisq()
 
 def exofastmain():
     x = np.loadtxt('tres2b_rv.dat',comments='#', usecols=0)
@@ -306,11 +332,11 @@ def exofastmain():
 #exofastmain()
 
 def rerunmain():
-    #using James 8/2/20 vals
-    starmass = 0.9 * 1.98847e30
-    starmass_err = 0.2 * 1.98847e30*np.array([1,1])
+    #using James paper vals
+    starmass = 0.912 * 1.98847e30
+    starmass_err = 1.98847e30*np.array([0.172,0.378])
 
-    values = np.loadtxt('radveloutput.txt')
+    values = np.loadtxt('cuillin/radveloutput.txt')
     period = values[1,1]
     period_err = np.array([values[1,0], values[1,2]])
     print(period)
@@ -323,8 +349,9 @@ def rerunmain():
     minimiser = radvelminimiser_MCMC(x,y,err)
     minimiser.setperiod(period, period_err)
     orbrad = minimiser.calculateorbrad(starmass, starmass_err)
-    values[3,:] = orbrad
+    values[4,:] = orbrad
     print(values)
-    np.savetxt('radveloutput.txt', values)
+    np.savetxt('cuillin/radveloutput.txt', values)
 
 #rerunmain()
+printchisq()
